@@ -38,7 +38,7 @@
             $this.on('submit', function() {
                 $.ajax({
                     url: settings.url ? settings.url : $this.attr('action'),
-                    data: settings.data ? settings.data : $this.serialize(),
+                    data: typeof settings.data === 'function' ? settings.data() : $this.serialize(),
                     type: settings.method ? settings.method : $this.attr('method'),
                     dataType: settings.dataType,
                     success: settings.success,
