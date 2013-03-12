@@ -35,7 +35,7 @@
 		
         return this.each(function() {
             var $this = $(this);
-            $this.on('submit', function() {
+            $this.on('submit.ajaxSubmit', function() {
                 $.ajax({
                     url: settings.url ? settings.url : $this.attr('action'),
                     data: typeof settings.data === 'function' ? settings.data() : $this.serialize(),

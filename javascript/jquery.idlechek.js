@@ -45,7 +45,7 @@
                 }
             }
             var idleTimeout = setTimeout(onIdle, settings.timeout);
-            $this.on('mousemove.idleCheck keydown.idleCheck', function() {
+            $this.on('click.idleCheck mousemove.idleCheck keydown.idleCheck keyup.idleCheck', function() {
                 clearTimeout(idleTimeout);
                 if ($this.data('idleCheck')) {
                     if (typeof settings.onActive === 'function') {
