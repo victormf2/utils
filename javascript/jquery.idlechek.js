@@ -1,4 +1,9 @@
 /**
+ * 
+ * 
+ * Eduardo vai tomá no
+ * 
+ * 
  * Verificará se o usuário está inativo por um tempo
  * determinado em milissegundos.
  * É considerado inativo se o usuário não fizer ação
