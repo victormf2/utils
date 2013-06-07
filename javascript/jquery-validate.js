@@ -1,3 +1,6 @@
+// regex de data
+// /^(?:(?:0[1-9]|1[0-9]|2[0-8])\/(?:0[1-9]|1[0-2])|(?:29|30)\/(?:0[13-9]|1[0-2])|(?:31)\/(?:0[13578]|1[02]))\/(?:\d{4})$|^29\/02\/(?:\d{2}(?:[13579][26]|[02468][48]|[2468]0)|(?:[13579][26]|[02468][048])00)$/
+
 (function($) {
     $.expr[':'].editable = function(el) {
         return $(el).not('[disabled]').is('input[type!="hidden"][type!="button"][type!="submit"][type!="image"],textarea,select');
