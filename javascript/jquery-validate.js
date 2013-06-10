@@ -6,71 +6,70 @@
         return $(el).not('[disabled]').is('input[type!="hidden"][type!="button"][type!="submit"][type!="image"],textarea,select');
     };
     $.validate = {
+        //Validation will be called on form submit
+        submit: true,
+        //Validation will be called on field change event
+        change: true,
+        //Validation will be called on field input event
+        input: false,
+        //Delay to be used on validation after input event
+        inputTimeout: 500,
+        //Validation will be called on field keypress event
+        keypress: false,
+        //Validation will be called on field blur event
+        blur: false,
+        //Validation will be called on field focus event
+        focus: false,
+        //Form will be submited via ajax (onValid), so event is default prevented
+        ajax: false,
+        //stopImmediatePropagation for submit event
+        stopImmediatePropagation: true,
+        //stopPropagation for submit event
+        stopPropagation: true,
+        //Class used for error messages
+        errorMessageClass: 'error-message',
+        //Tag name used to create error messages
+        errorMessageTagName: 'span',
+        //Boolean indicating whether errors will be shown,
+        //or custom function to show errors
+        //The parameters for this function will be:
+        // - errors: array with error messages
+        // - settings: the options passed within the validate method
+        showErrors: true,
+        //Boolean indicating whether errors will be removed,
+        //or custom function to remove errors
+        //The parameters for this function will be:
+        // - settings: the options passed within the validate method
+        removeErrors: true,
+        //Function to be executed after a field is validated
+        eachValidField: $.noop,
+        //Function to be executed after a field is invalidated
+        eachInvalidField: $.noop,
+        //Function to be executed after a field validation, regardless it's valid or not
+        eachField: $.noop,
+        //Function to be executed after a field group (usually a form) is validated
+        onValid: $.noop,
+        //Function to be executed after a field group (usually a form) is invalidated
+        onInvalid: $.noop,
+        //Wheter event handlers will be delegated or not (less performance)
+        //It's good to use this option if you wish to validate on every field change,
+        //but the form fields are generated dinamically, so you don't have to recall
+        //the validate method everytime
+        delegate: false,
         rules: {},
         messages: {
             required: 'Required field',
             "required-if": 'Required field when:'
         },
         setupSettings: function(options) {
-            var settings = $.extend({
-                //Validation will be called on form submit
-                submit: true,
-                //Validation will be called on field change
-                change: true,
-                //Validation will be called on input value change (type and paste)
-                input: false,
-                //Validation will be called on input keypress
-                keypress: false,
-                //Validation will be called on field focus out
-                blur: false,
-                //Validation will be called on field focus in
-                focus: false,
-                //Form will be submited via ajax (onValid), so event is default prevented
-                ajax: false,
-                //stopImmediatePropagation for submit event
-                stopImmediatePropagation: true,
-                //stopPropagation for submit event
-                stopPropagation: true,
-                //Class used for error messages
-                errorMessageClass: 'error-message',
-                //Tag name used to create error messages
-                errorMessageTagName: 'span',
-                //Boolean indicating whether errors will be shown,
-                //or custom function to show errors
-                //The parameters for this function will be:
-                // - errors: array with error messages
-                // - settings: the options passed within the validate method
-                showErrors: true,
-                //Boolean indicating whether errors will be removed,
-                //or custom function to remove errors
-                //The parameters for this function will be:
-                // - settings: the options passed within the validate method
-                removeErrors: true,
-                //Function to be executed after a field is validated
-                eachValidField: $.noop,
-                //Function to be executed after a field is invalidated
-                eachInvalidField: $.noop,
-                //Function to be executed after a field validation, regardless it's valid or not
-                eachField: $.noop,
-                //Function to be executed after a field group (usually a form) is validated
-                onValid: $.noop,
-                //Function to be executed after a field group (usually a form) is invalidated
-                onInvalid: $.noop,
-                //Wheter event handlers will be delegated or not (less performance)
-                //It's good to use this option if you wish to validate on every field change,
-                //but the form fields are generated dinamically, so you don't have to recall
-                //the validate method everytime
-                delegate: false
-            }, options);
-            settings.rules = $.extend($.validate.rules, options.rules);
-            settings.messages = $.extend($.validate.messages, options.messages);
+            return $.extend(true, $.validate, options);
         }
     };
     var methods = {
         init: function(options) {
             var settings = $.validate.setupSettings(options);
             return this.each(function() {
-                var $fieldGroup = $(this), $form = $fieldGroup.closest('form')
+                var $fieldGroup = $(this), $form = $fieldGroup.closest('form');
                 if (settings.submit) {
                     $form.on('submit', function(event) {
                         if ($fieldGroup.validate('validateFieldGroup', settings) || settings.ajax) {
@@ -84,7 +83,32 @@
                     });
                 }
                 if (settings.delegate) {
-
+                    if (settings.change) {
+                        $fieldGroup.on('change', ':editable', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.input) {
+                        //TODO implement inputTimeout
+                        $fieldGroup.on('input', ':editable', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.keypress) {
+                        $fieldGroup.on('keypress', ':editable', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.blur) {
+                        $fieldGroup.on('blur', ':editable', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.focus) {
+                        $fieldGroup.on('focus', ':editable', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
                 } else {
                     if (settings.change) {
                         $fieldGroup.find(':editable').on('change', function() {
@@ -93,6 +117,21 @@
                     }
                     if (settings.input) {
                         $fieldGroup.find(':editable').on('input', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.keypress) {
+                        $fieldGroup.find(':editable').on('keypress', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.blur) {
+                        $fieldGroup.find(':editable').on('blur', function() {
+                            $fieldGroup.validate('validateFieldGroup', settings);
+                        });
+                    }
+                    if (settings.focus) {
+                        $fieldGroup.find(':editable').on('focus', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
