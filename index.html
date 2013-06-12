@@ -1,0 +1,59 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Olá Mundo</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+        <script src="javascript/jquery-validate.js"></script>
+        <script>
+            $(function() {
+                $('form').validate({
+                    rules: {
+                        bla: function() {
+                            return $('#bla').val() === 'bla';
+                        }
+                    },
+                    messages: {
+                        bla: 'Bla value is bla'
+                    },
+                    filter: function() {
+                        return !$(this).is('.validate');
+                    },
+                    errorMessageTagName: 'div',
+                    input: true,
+                    ajax: true,
+                    onValid: function() {
+                        alert('form válido caraleo');
+                    },
+                    onInvalid: function() {
+                        alert('invalid ha!');
+                    }
+                });
+            });
+        </script>
+        <style>
+            .error-message {
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        Olá Mundo!
+        <form>
+            <div>
+                Required: <input id="bla" type="text" data-validate="required" />
+            </div>
+            <div>
+                Required-if: <input type="text" data-validate="required-if[bla]" />
+            </div>
+            <div>
+                Filter: <input type="text" data-validate="required" class="validate" />
+            </div>
+            <input type="submit"/>
+        </form>
+    </body>
+</html>
