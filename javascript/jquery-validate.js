@@ -56,10 +56,13 @@
         //but the form fields are generated dinamically, so you don't have to recall
         //the validate method everytime
         delegate: false,
-        rules: {},
+        rules: {
+        },
         messages: {
             required: 'Required field',
-            "required-if": 'Required field when:'
+            "required-if": function() {
+
+            }
         },
         setupSettings: function(options) {
             return $.extend(true, $.validate, options);
@@ -82,56 +85,60 @@
                         }
                     });
                 }
+                var $fields = $fieldGroup.find(':editable');
+                if (settings.filter) {
+                    $fields = $fields.filter(settings.filter);
+                }
                 if (settings.delegate) {
                     if (settings.change) {
-                        $fieldGroup.on('change', ':editable', function() {
+                        $fieldGroup.on('change', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.input) {
                         //TODO implement inputTimeout
-                        $fieldGroup.on('input', ':editable', function() {
+                        $fieldGroup.on('input', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.keypress) {
-                        $fieldGroup.on('keypress', ':editable', function() {
+                        $fieldGroup.on('keypress', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.blur) {
-                        $fieldGroup.on('blur', ':editable', function() {
+                        $fieldGroup.on('blur', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.focus) {
-                        $fieldGroup.on('focus', ':editable', function() {
+                        $fieldGroup.on('focus', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                 } else {
                     if (settings.change) {
-                        $fieldGroup.find(':editable').on('change', function() {
+                        $fields.on('change', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.input) {
-                        $fieldGroup.find(':editable').on('input', function() {
+                        $fields.on('input', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.keypress) {
-                        $fieldGroup.find(':editable').on('keypress', function() {
+                        $fields.on('keypress', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.blur) {
-                        $fieldGroup.find(':editable').on('blur', function() {
+                        $fields.on('blur', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.focus) {
-                        $fieldGroup.find(':editable').on('focus', function() {
+                        $fields.on('focus', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
@@ -167,14 +174,19 @@
                 var $field = $(this);
                 var errors = [];
                 var dataValidate = $.trim($field.data('validate'));
-                var validationRules = dataValidate.split(/[, ;]+/);
-                if (/\brequired\b/.test(dataValidate) && !$field.val()) {
+                var validationRules = [];
+                var reg = /[\w-]+(?:\[.*?\])?/g;
+                var result = '';
+                while ((result = reg.exec(dataValidate)) !== null) {
+                    validationRules.push(result[0]);
+                }
+                if (/(?:\s|^)required(?:\s|$)/.test(dataValidate) && !$field.val()) {
                     validated = false;
                     validField = false;
                     errors.push(settings.messages.required);
                 }
                 var match;
-                if (match = dataValidate.match(/\brequired-if\[(.*?)\]/)) {
+                if (match = dataValidate.match(/(?:\s|^)required-if\[(.*?)\]/)) {
                     var conditionals = match[1].split(/[, ;]+/);
                     var mustBeRequired = true;
                     var conditionalMessages = [];
@@ -193,15 +205,23 @@
                         errors.push(settings.messages['required-if']).concat(conditionalMessages);
                     }
                 }
-                $.each(validationRules, function(index, validationRule) {
-                    if (typeof settings.rules[validationRule] === 'function') {
-                        if (!settings.rules[validationRule].call($field[0])) {
-                            validated = false;
-                            validField = false;
-                            errors.push(settings.messages[validationRule]);
+                if (validField) {
+                    $.each(validationRules, function(index, validationRule) {
+                        var params = [];
+                        var match = validationRule.match(/([^\]\[]*)(?:\[(.*)\])?/);
+                        validationRule = match[1];
+                        if (match[2]) {
+                            params = match[2].split(/[, ;]+/);
                         }
-                    }
-                });
+                        if (typeof settings.rules[validationRule] === 'function') {
+                            if (!settings.rules[validationRule].call($field[0])) {
+                                validated = false;
+                                validField = false;
+                                errors.push(settings.messages[validationRule]);
+                            }
+                        }
+                    });
+                }
                 settings.eachField();
                 if (validField) {
                     if (settings.removeErrors) {
