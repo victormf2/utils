@@ -156,13 +156,12 @@
             var settings = $.validate.setupSettings(options);
             var validated = true;
             this.each(function() {
-                var $fieldGroup = $(this), validFieldGroup = true;
+                var $fieldGroup = $(this)
                 $fieldGroup.validate('getFields', settings).each(function() {
                     var $field = $(this);
                     if ($field.validate('doValidation', settings)) {
                     } else {
                         validated = false;
-                        validFieldGroup = false;
                     }
                 });
             });
@@ -182,7 +181,7 @@
                 while ((result = reg.exec(dataValidate)) !== null) {
                     validationRules.push(result[0]);
                 }
-                if (/(?:\s|^)required(?:\s|$)/.test(dataValidate) && !$field.val()) {
+                if (/(?:\s|^)required(?:\s|$)/.test(dataValidate) && $field.validate('empty')) {
                     validated = false;
                     validField = false;
                     errors.unshift(settings.messages.required);
@@ -201,23 +200,21 @@
                             }
                         }
                     });
-                    if (mustBeRequired && !$field.val()) {
+                    if (mustBeRequired && $field.validate('empty')) {
                         validated = false;
                         validField = false;
                         errors.unshift(settings.messages['required-if']);
                         errors = conditionalMessages.concat(errors);
                     }
                 }
-                if (validField) {
+                if (validField && $field.validate('empty')) {
                     $.each(validationRules, function(index, validationRule) {
                         var params = [];
                         var match = validationRule.match(/([^\]\[]*)(?:\[(.*)\])?/);
                         validationRule = match[1];
-                        if (match[2]) {
-                            params = match[2].split(/[, ;]+/);
-                        }
+                        var params = match[2];
                         if (typeof settings.rules[validationRule] === 'function') {
-                            if (!settings.rules[validationRule].call($field[0])) {
+                            if (!settings.rules[validationRule].call($field[0], params)) {
                                 validated = false;
                                 validField = false;
                                 errors.unshift(settings.messages[validationRule]);
@@ -276,6 +273,9 @@
                 $fields = $fields.filter(settings.filter);
             }
             return $fields;
+        },
+        empty: function() {
+            return !this.val();
         }
     };
 
