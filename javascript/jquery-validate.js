@@ -57,6 +57,13 @@
         //the validate method everytime
         delegate: false,
         rules: {
+            digit: function() {
+                return /^\d+$/.test($(this).val());
+            },
+            email: function() {
+                return /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i
+                        .test($(this).val());
+            }
         },
         messages: {
             required: 'Required field',
@@ -64,6 +71,12 @@
         },
         setupSettings: function(options) {
             return $.extend(true, $.validate, options);
+        },
+        message: function(message, field, params) {
+            if (typeof message === 'function') {
+                return message.call(field, params);
+            }
+            return message;
         }
     };
     var methods = {
@@ -193,7 +206,7 @@
                     var conditionalMessages = [];
                     $.each(conditionals, function(index, conditional) {
                         if (typeof settings.rules[conditional] === 'function') {
-                            conditionalMessages.unshift(settings.messages[conditional]);
+                            conditionalMessages.unshift($.validate.message(settings.messages[conditional], $field[0]));
                             if (!settings.rules[conditional].call($field[0])) {
                                 mustBeRequired = false;
                                 return false;
@@ -217,21 +230,17 @@
                             if (!settings.rules[validationRule].call($field[0], params)) {
                                 validated = false;
                                 validField = false;
-                                errors.unshift(settings.messages[validationRule]);
+                                errors.unshift($.validate.message(settings.messages[validationRule], $field[0], params));
                             }
                         }
                     });
                 }
                 settings.eachField();
                 if (validField) {
-                    if (settings.removeErrors) {
-                        $field.validate('removeErrors', settings);
-                    }
+                    $field.validate('removeErrors', settings);
                     settings.eachValidField();
                 } else {
-                    if (settings.showErrors) {
-                        $field.validate('showErrors', errors, settings);
-                    }
+                    $field.validate('showErrors', errors, settings);
                     settings.eachInvalidField();
                 }
             });
@@ -239,6 +248,9 @@
         },
         showErrors: function(errors, options) {
             this.validate('removeErrors', options);
+            if (!options.showErrors) {
+                return;
+            }
             var settings = $.validate.setupSettings(options);
             if (typeof settings.showErrors === 'function') {
                 return this.each(function() {
@@ -255,6 +267,9 @@
             });
         },
         removeErrors: function(options) {
+            if (!options.removeErrors) {
+                return;
+            }
             var settings = $.validate.setupSettings(options);
             if (typeof settings.removeErrors === 'function') {
                 return this.each(function() {
