@@ -66,17 +66,18 @@
             }
         },
         messages: {
+            "(default)": 'Invalid field',
             required: 'Required field',
             "required-if": 'Required field when: '
         },
         setupSettings: function(options) {
-            return $.extend(true, $.validate, options);
+            return $.extend(true, {}, $.validate, options);
         },
         message: function(message, field, params) {
             if (typeof message === 'function') {
                 return message.call(field, params);
             }
-            return message;
+            return message || this.messages['(default)'];
         }
     };
     var methods = {
@@ -85,7 +86,8 @@
             return this.each(function() {
                 var $fieldGroup = $(this), $form = $fieldGroup.closest('form');
                 if (settings.submit) {
-                    $form.on('submit', function(event) {
+                    $form.off('submit.validate');
+                    $form.on('submit.validate', function(event) {
 
                         if ($fieldGroup.validate('validateFieldGroup', settings)) {
                             if (settings.ajax) {
@@ -111,54 +113,64 @@
                 var $fields = $fieldGroup.validate('getFields', settings);
                 if (settings.delegate) {
                     if (settings.change) {
-                        $fieldGroup.on('change', $fields, function() {
-                            $(this).validate('validateFieldGroup', settings);
+                        $fieldGroup.off('change.validate');
+                        $fieldGroup.on('change.validate', $fields, function(event) {
+                            $(event.target).validate('doValidation', settings);
                         });
                     }
                     if (settings.input) {
                         //TODO implement inputTimeout
-                        $fieldGroup.on('input', $fields, function() {
-                            $(this).validate('validateFieldGroup', settings);
+                        $fieldGroup.off('input.validate');
+                        $fieldGroup.on('input.validate', $fields, function(event) {
+                            $(event.target).validate('doValidation', settings);
                         });
                     }
                     if (settings.keypress) {
-                        $fieldGroup.on('keypress', $fields, function() {
-                            $(this).validate('validateFieldGroup', settings);
+                        $fieldGroup.off('keypress.validate');
+                        $fieldGroup.on('keypress.validate', $fields, function(event) {
+                            $(event.target).validate('doValidation', settings);
                         });
                     }
                     if (settings.blur) {
-                        $fieldGroup.on('blur', $fields, function() {
+                        $fieldGroup.off('blur.validate');
+                        $fieldGroup.on('blur.validate', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.focus) {
-                        $fieldGroup.on('focus', $fields, function() {
+                        $fieldGroup.off('focus.validate');
+                        $fieldGroup.on('focus.validate', $fields, function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                 } else {
                     if (settings.change) {
-                        $fields.on('change', function() {
-                            $fieldGroup.validate('validateFieldGroup', settings);
+                        $fields.off('change.validate');
+                        $fields.on('change.validate', function() {
+                            $(this).validate('doValidation', settings);
                         });
                     }
                     if (settings.input) {
-                        $fields.on('input', function() {
-                            $fieldGroup.validate('validateFieldGroup', settings);
+                        $fields.off('input.validate');
+                        $fields.on('input.validate', function() {
+                            $(this).validate('doValidation', settings);
                         });
                     }
                     if (settings.keypress) {
-                        $fields.on('keypress', function() {
-                            $fieldGroup.validate('validateFieldGroup', settings);
+                        $fields.off('keypress.validate');
+                        $fields.on('keypress.validate', function() {
+                            $(this).validate('doValidation', settings);
                         });
                     }
                     if (settings.blur) {
-                        $fields.on('blur', function() {
+                        $fields.off('blur.validate');
+                        $fields.on('blur.validate', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
                     if (settings.focus) {
-                        $fields.on('focus', function() {
+                        $fields.off('focus.validate');
+                        $fields.on('focus.validate', function() {
                             $fieldGroup.validate('validateFieldGroup', settings);
                         });
                     }
@@ -189,7 +201,7 @@
                 var errors = [];
                 var dataValidate = $.trim($field.data('validate'));
                 var validationRules = [];
-                var reg = /[\w-]+(?:\[.*?\])?/g;
+                var reg = /[\w-]+(?:\(.*?\))?/g;
                 var result = '';
                 while ((result = reg.exec(dataValidate)) !== null) {
                     validationRules.push(result[0]);
@@ -200,13 +212,13 @@
                     errors.unshift(settings.messages.required);
                 }
                 var match;
-                if (match = dataValidate.match(/(?:\s|^)required-if\[(.*?)\]/)) {
+                if (match = dataValidate.match(/(?:\s|^)required-if\((.*?)\)/)) {
                     var conditionals = match[1].split(/[, ;]+/);
                     var mustBeRequired = true;
                     var conditionalMessages = [];
                     $.each(conditionals, function(index, conditional) {
                         if (typeof settings.rules[conditional] === 'function') {
-                            conditionalMessages.unshift($.validate.message(settings.messages[conditional], $field[0]));
+                            conditionalMessages.unshift($.validate.message.call(settings, settings.messages[conditional], $field[0]));
                             if (!settings.rules[conditional].call($field[0])) {
                                 mustBeRequired = false;
                                 return false;
@@ -220,17 +232,20 @@
                         errors = conditionalMessages.concat(errors);
                     }
                 }
-                if (validField && $field.validate('empty')) {
+                if (validField && !$field.validate('empty')) {
                     $.each(validationRules, function(index, validationRule) {
                         var params = [];
-                        var match = validationRule.match(/([^\]\[]*)(?:\[(.*)\])?/);
+                        var match = validationRule.match(/([^()]*)(?:\((.*)\))?/);
                         validationRule = match[1];
                         var params = match[2];
+                        if (typeof settings.rules[validationRule] === 'string') {
+                            validationRule = settings.rules[validationRule];
+                        }
                         if (typeof settings.rules[validationRule] === 'function') {
                             if (!settings.rules[validationRule].call($field[0], params)) {
                                 validated = false;
                                 validField = false;
-                                errors.unshift($.validate.message(settings.messages[validationRule], $field[0], params));
+                                errors.unshift($.validate.message.call(settings, settings.messages[validationRule], $field[0], params));
                             }
                         }
                     });
@@ -238,20 +253,20 @@
                 settings.eachField();
                 if (validField) {
                     $field.validate('removeErrors', settings);
-                    settings.eachValidField();
+                    settings.eachValidField.call($field[0]);
                 } else {
                     $field.validate('showErrors', errors, settings);
-                    settings.eachInvalidField();
+                    settings.eachInvalidField.call($field[0]);
                 }
             });
             return validated;
         },
         showErrors: function(errors, options) {
             this.validate('removeErrors', options);
-            if (!options.showErrors) {
+            var settings = $.validate.setupSettings(options);
+            if (!settings.showErrors) {
                 return;
             }
-            var settings = $.validate.setupSettings(options);
             if (typeof settings.showErrors === 'function') {
                 return this.each(function() {
                     settings.showErrors.call(this, errors, settings);
@@ -267,10 +282,10 @@
             });
         },
         removeErrors: function(options) {
-            if (!options.removeErrors) {
+            var settings = $.validate.setupSettings(options);
+            if (!settings.removeErrors) {
                 return;
             }
-            var settings = $.validate.setupSettings(options);
             if (typeof settings.removeErrors === 'function') {
                 return this.each(function() {
                     settings.removeErrors.call(this, settings);
