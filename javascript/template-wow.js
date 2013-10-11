@@ -9,19 +9,32 @@
         return allChildren;
     }
 
-    function generateTemplate(el) {
-        var template = {}, children = el.children;
-        for (var i = 0; i < children.length; i++) {
-            var name = children[i].getAttribute('data-bind'),
-                hierarchy = name.split('.'),
-                obj = template;
-            for (var j = 0; j < hierarchy.length; j++) {
-                if (typeof obj[hierarchy[i]] === 'undefined') {
-                    obj[hierarchy[i]] = {};
-                }
-                obj = obj[hierarchy[i]];
+    function getTemplate(el) {
+        var template = {};
+        return generateTemplate(el, template);
+    }
+
+    function getObjectFromHierarchy(hierarchy, object) {
+        for (var i = 0; i < hierarchy.length; i++) {
+            if (typeof object[hierarchy[i]] === 'undefined') {
+                object[hierarchy[i]] = {};
             }
-            obj.__el = children[i];
+            object = object[hierarchy[i]];
+        }
+        return object;
+    }
+
+    function generateTemplate(el, obj) {
+        var children = el.children;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i], name = child.getAttribute('bind') || '';
+            if (name) {
+                var hierarchy = name.split('.'),
+                    object = generateTemplate(child, obj);
+                object.__el = children[i];
+            }
+
+
         }
     }
 
