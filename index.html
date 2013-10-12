@@ -9,51 +9,44 @@ and open the template in the editor.
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
         <script src="javascript/jquery-validate.js"></script>
+        <script src="javascript/ajax-nav.js"></script>
+        <script src="javascript/template-wow.js"></script>
         <script>
-            $(function() {
-                $('form').validate({
-                    rules: {
-                        bla: function() {
-                            return $('#bla').val() === 'bla';
+            (function() {
+                $(function() {
+                    var templateWow = new TemplateWow();
+                    templateWow.setData(document.getElementById('eita'), {
+                        nossa: {
+                            senhora: 'senhora',
+                            casa: 'casa'
+                        },
+                        meu: {
+                            radio: 'op3'
                         }
-                    },
-                    messages: {
-                        bla: 'Bla value is bla'
-                    },
-                    filter: function() {
-                        return !$(this).is('.validate');
-                    },
-                    errorMessageTagName: 'div',
-                    input: true,
-                    ajax: true,
-                    onValid: function() {
-                        alert('form válido caraleo');
-                    },
-                    onInvalid: function() {
-                        alert('invalid ha!');
-                    }
+                    });
                 });
-            });
+                "use strict";
+            })();
         </script>
         <style>
-            .error-message {
-                color: red;
-            }
         </style>
     </head>
     <body>
-        Olá Mundo!
-        <form>
+        <header>
+        </header>
+        <div id="eita">
+            <input name="preula">
             <div>
-                Required: <input id="bla" type="text" data-validate="required" />
+                <input name="nossa.senhora">
+                <input name="nossa.casa">
             </div>
-            <div>
-                Required-if: <input type="text" data-validate="required-if[bla]" />
-            </div>
-            <div>
-                Filter: <input type="text" data-validate="required" class="validate" />
-            </div>
-            <input type="submit"/>
-        </form>
+            <input type="radio" name="meu.radio" value="op1" id="op1"><label for="op1">Opção1</label>
+            <input type="radio" name="meu.radio" value="op2" id="op2"><label for="op2">Opção2</label>
+            <input type="radio" name="meu.radio" value="op3" id="op3"><label for="op3">Opção3</label>
+        </div>
+
+        <input id="input" type="text">
+        <textarea id="textarea"></textarea>
+        <select id="select"></select>
     </body>
 </html>
