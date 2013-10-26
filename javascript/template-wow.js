@@ -2,6 +2,18 @@ function TemplateWow() {
 }
 (function() {
     "use strict";
+
+    var getElementData;
+    if (document.documentElement.dataset) {
+        getElementData = function(el, name) {
+            return el.dataset[name];
+        };
+    } else {
+        getElementData = function(el, name) {
+            return el.getAttribute('data-' + name);
+        };
+    }
+
     function mergeObjects(o1, o2) {
         for (var attr in o2) {
             if (!attr) {
@@ -38,7 +50,7 @@ function TemplateWow() {
     function buildTemplate(el, template) {
         var children = el.children;
         for (var i = 0; i < children.length; i++) {
-            var child = children[i], name = child.name || child.getAttribute('name');
+            var child = children[i], name = getElementData(child, 'bind');
             if (name) {
                 var hierarchy = name.split('.'),
                     object = getObjectFromHierarchy(hierarchy, template),
@@ -59,15 +71,22 @@ function TemplateWow() {
         }
     }
 
+    function notNullUndefinedString(str) {
+        return str === undefined || str === null ? '' : str;
+    }
+
     function setDataWithTemplate(template, data) {
         for (var attr in template) {
             if (!attr) {
-                var element = template[attr].element, dataType = typeof data;
-                if (dataType !== 'string' && dataType !== 'number') {
-                    continue;
-                }
-                if (element instanceof HTMLInputElement || element instanceof  HTMLTextAreaElement) {
-                    element.value = data;
+                var element = template[attr].element;
+                if (element instanceof HTMLInputElement) {
+                    if (element.type === 'checkbox') {
+                        element.checked = data;
+                    } else {
+                        element.value = notNullUndefinedString(data);
+                    }
+                } else if (element instanceof  HTMLTextAreaElement) {
+                    element.value = notNullUndefinedString(data);
                 } else if (element instanceof HTMLSelectElement) {
                     for (var option, i = 0; option = element.options[i]; i++) {
                         if (option.value == data) {
@@ -85,7 +104,7 @@ function TemplateWow() {
                 }
                 continue;
             }
-            setDataWithTemplate(template[attr], data[attr] || {});
+            setDataWithTemplate(template[attr], (data || {})[attr]);
         }
     }
 
@@ -93,6 +112,12 @@ function TemplateWow() {
         var template = getTemplate(el);
         setDataWithTemplate(template, data);
     };
+
+    TemplateWow.prototype.bindData = function(el, data) {
+        var template = getTemplate(el);
+    };
+
+
     TemplateWow.prototype.getData = function(el) {
     };
 })();

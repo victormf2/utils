@@ -12,8 +12,49 @@ and open the template in the editor.
         <script src="javascript/ajax-nav.js"></script>
         <script src="javascript/template-wow.js"></script>
         <script>
+            div = document.getElementById('bla');
+
+            o = {
+                nome: 'Victor'
+            };
+            o._nome = o.nome;
+            Object.defineProperty(o, 'nome', {
+                get: function() {
+                    return this._nome;
+                },
+                set: function(p) {
+                    this._nome = p;
+                }
+            });
+
+            o.nome = 'José';
+            div.innerHTML = o._nome;
+
+
             (function() {
+                "use strict";
+
+                function getType(o) {
+                    var type = typeof o;
+                    if (type !== 'object') {
+                        return type;
+                    }
+                    type = toString.call(o);
+                    return type.substring(8, type.length - 1).toLowerCase();
+                }
+
+                function dataListener(object) {
+                    var type = getType(object);
+                    switch (type) {
+                        case 'object':
+                            break;
+                    }
+                }
+
                 $(function() {
+
+
+
                     var templateWow = new TemplateWow();
                     templateWow.setData(document.getElementById('eita'), {
                         nossa: {
@@ -22,10 +63,15 @@ and open the template in the editor.
                         },
                         meu: {
                             radio: 'op3'
-                        }
+                        },
+                        casilda: true,
+                        bla: {
+                            bla: 'mano',
+                            cla: 'Texto muito\nDaora'
+                        },
+                        preula: '0'
                     });
                 });
-                "use strict";
             })();
         </script>
         <style>
@@ -35,18 +81,24 @@ and open the template in the editor.
         <header>
         </header>
         <div id="eita">
-            <input name="preula">
+            <input data-bind="preula">
             <div>
-                <input name="nossa.senhora">
-                <input name="nossa.casa">
+                <input data-bind="nossa.senhora">
+                <input data-bind="nossa.casa">
+                <input type="checkbox" id="mano" data-bind="casilda"><label for="mano">Mano do céu</label>
+                <p>
+                    <select data-bind="bla.bla">
+                        <option value="">Selecione</option>
+                        <option value="mano">A</option>
+                        <option value="do">B</option>
+                        <option value="céu">C</option>
+                    </select>
+                    <textarea data-bind="bla.cla"></textarea>
+                </p>
             </div>
-            <input type="radio" name="meu.radio" value="op1" id="op1"><label for="op1">Opção1</label>
-            <input type="radio" name="meu.radio" value="op2" id="op2"><label for="op2">Opção2</label>
-            <input type="radio" name="meu.radio" value="op3" id="op3"><label for="op3">Opção3</label>
+            <input type="radio" data-bind="meu.radio" value="op1" id="op1"><label for="op1">Opção1</label>
+            <input type="radio" data-bind="meu.radio" value="op2" id="op2"><label for="op2">Opção2</label>
+            <input type="radio" data-bind="meu.radio" value="op3" id="op3"><label for="op3">Opção3</label>
         </div>
-
-        <input id="input" type="text">
-        <textarea id="textarea"></textarea>
-        <select id="select"></select>
     </body>
 </html>
