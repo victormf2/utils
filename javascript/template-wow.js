@@ -129,6 +129,11 @@ TemplateWow.utils = (function() {
             }
             this[''].elementList = elementList;
             this[''].type = DynamicObject.type.value;
+            this[''].elementList.forEach(function(item) {
+                if (typeof item.templater.listen === 'function') {
+                    item.templater.listen.call(item.element, this);
+                }
+            }, this);
             return;
         }
         this[''].type = DynamicObject.type.object;
@@ -159,16 +164,31 @@ TemplateWow.utils = (function() {
     };
     DynamicObject.templater = {
         text: {
+            listen: function(prop) {
+                this.addEventListener('change', function() {
+                    prop[''].value = this.value;
+                }, false);
+            },
             render: function(value) {
                 this.value = notNullUndefinedString(value);
             }
         },
         checkbox: {
+            listen: function(prop) {
+                this.addEventListener('change', function() {
+                    prop[''].value = this.checked;
+                }, false);
+            },
             render: function(value) {
                 this.checked = value;
             }
         },
         select: {
+            listen: function(prop) {
+                this.addEventListener('change', function() {
+                    prop[''].value = this.options[this.selectedIndex].value;
+                }, false);
+            },
             render: function(value) {
                 for (var option, i = 0; option = this.options[i]; i++) {
                     if (option.value == value) {
@@ -179,6 +199,13 @@ TemplateWow.utils = (function() {
             }
         },
         radio: {
+            listen: function(prop) {
+                this.addEventListener('change', function() {
+                    if (this.checked) {
+                        prop[''].value = this.value;
+                    }
+                }, false);
+            },
             render: function(value) {
                 this.checked = this.value == value;
             }

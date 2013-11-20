@@ -40,22 +40,13 @@ and open the template in the editor.
                             bla: 'mano',
                             cla: 'Texto muito\nDaora'
                         },
-                        preula: '0'
-                    };
-
-                    var input = document.getElementById('naoseimais');
-                    teste = {};
-                    Object.defineProperty(teste, 'naoseimais', {
-                        enumerable: true,
-                        get: function() {
-                            return this._naoseimais;
-                        },
-                        set: function(value) {
-                            this._naoseimais = value;
-                            input.value = value;
+                        preula: '0',
+                        titulo: {
+                            do: {
+                                caraleo: 'TÍTULO'
+                            }
                         }
-                    });
-                    teste.naoseimais = 'aaaaaaaa';
+                    };
 
                 });
             })();
@@ -66,8 +57,8 @@ and open the template in the editor.
     <body>
         <header>
         </header>
-        <input type="text" id="naoseimais">
         <div id="eita">
+            <h3 data-bind="titulo.do.caraleo"></h3>
             <input data-bind="preula">
             <div>
                 <input data-bind="nossa.senhora">
@@ -83,9 +74,9 @@ and open the template in the editor.
                     <textarea data-bind="bla.cla"></textarea>
                 </p>
             </div>
-            <input type="radio" data-bind="meu.radio" value="op1" id="op1"><label for="op1">Opção1</label>
-            <input type="radio" data-bind="meu.radio" value="op2" id="op2"><label for="op2">Opção2</label>
-            <input type="radio" data-bind="meu.radio" value="op3" id="op3"><label for="op3">Opção3</label>
+            <input type="radio" data-bind="meu.radio" name="radinho" value="op1" id="op1"><label for="op1">Opção1</label>
+            <input type="radio" data-bind="meu.radio" name="radinho" value="op2" id="op2"><label for="op2">Opção2</label>
+            <input type="radio" data-bind="meu.radio" name="radinho" value="op3" id="op3"><label for="op3">Opção3</label>
         </div>
     </body>
 </html>
