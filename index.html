@@ -12,7 +12,7 @@ and open the template in the editor.
         <script src="javascript/ajax-nav.js"></script>
         <script src="javascript/template-wow.js"></script>
         <script>
-            var teste;
+            var teste, templateWow;
             (function() {
                 "use strict";
 
@@ -26,8 +26,8 @@ and open the template in the editor.
                 }
 
                 $(function() {
-                    var templateWow = new TemplateWow(document.getElementById('eita'));
-                    templateWow.setData(document.getElementById('eita'), {
+                    templateWow = new TemplateWow(document.getElementById('eita'));
+                    templateWow.data = {
                         nossa: {
                             senhora: 'senhora',
                             casa: 'casa'
@@ -41,7 +41,7 @@ and open the template in the editor.
                             cla: 'Texto muito\nDaora'
                         },
                         preula: '0'
-                    });
+                    };
 
                     var input = document.getElementById('naoseimais');
                     teste = {};
