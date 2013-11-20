@@ -12,25 +12,7 @@ and open the template in the editor.
         <script src="javascript/ajax-nav.js"></script>
         <script src="javascript/template-wow.js"></script>
         <script>
-            div = document.getElementById('bla');
-
-            o = {
-                nome: 'Victor'
-            };
-            o._nome = o.nome;
-            Object.defineProperty(o, 'nome', {
-                get: function() {
-                    return this._nome;
-                },
-                set: function(p) {
-                    this._nome = p;
-                }
-            });
-
-            o.nome = 'José';
-            div.innerHTML = o._nome;
-
-
+            var teste;
             (function() {
                 "use strict";
 
@@ -43,19 +25,8 @@ and open the template in the editor.
                     return type.substring(8, type.length - 1).toLowerCase();
                 }
 
-                function dataListener(object) {
-                    var type = getType(object);
-                    switch (type) {
-                        case 'object':
-                            break;
-                    }
-                }
-
                 $(function() {
-
-
-
-                    var templateWow = new TemplateWow();
+                    var templateWow = new TemplateWow(document.getElementById('eita'));
                     templateWow.setData(document.getElementById('eita'), {
                         nossa: {
                             senhora: 'senhora',
@@ -71,6 +42,21 @@ and open the template in the editor.
                         },
                         preula: '0'
                     });
+
+                    var input = document.getElementById('naoseimais');
+                    teste = {};
+                    Object.defineProperty(teste, 'naoseimais', {
+                        enumerable: true,
+                        get: function() {
+                            return this._naoseimais;
+                        },
+                        set: function(value) {
+                            this._naoseimais = value;
+                            input.value = value;
+                        }
+                    });
+                    teste.naoseimais = 'aaaaaaaa';
+
                 });
             })();
         </script>
@@ -80,6 +66,7 @@ and open the template in the editor.
     <body>
         <header>
         </header>
+        <input type="text" id="naoseimais">
         <div id="eita">
             <input data-bind="preula">
             <div>

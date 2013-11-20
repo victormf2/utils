@@ -1,8 +1,11 @@
-function TemplateWow() {
-}
-(function() {
-    "use strict";
+"use strict";
+function TemplateWow(el) {
+    var _ = TemplateWow.utils,
+        template = _.getTemplate(el);
 
+}
+TemplateWow.utils = (function() {
+    var utils = {};
     var getElementData;
     if (document.documentElement.dataset) {
         getElementData = function(el, name) {
@@ -13,7 +16,6 @@ function TemplateWow() {
             return el.getAttribute('data-' + name);
         };
     }
-
     function mergeObjects(o1, o2) {
         for (var attr in o2) {
             if (!attr) {
@@ -30,13 +32,11 @@ function TemplateWow() {
             }
         }
     }
-
-    function getTemplate(el) {
+    utils.getTemplate = function(el) {
         var template = {};
         buildTemplate(el, template);
         return template;
-    }
-
+    };
     function getObjectFromHierarchy(hierarchy, object) {
         for (var i = 0; i < hierarchy.length; i++) {
             if (typeof object[hierarchy[i]] === 'undefined') {
@@ -46,7 +46,6 @@ function TemplateWow() {
         }
         return object;
     }
-
     function buildTemplate(el, template) {
         var children = el.children;
         for (var i = 0; i < children.length; i++) {
@@ -70,12 +69,10 @@ function TemplateWow() {
             buildTemplate(child, template);
         }
     }
-
     function notNullUndefinedString(str) {
         return str === undefined || str === null ? '' : str;
     }
-
-    function setDataWithTemplate(template, data) {
+    utils.setDataWithTemplate = function(template, data) {
         for (var attr in template) {
             if (!attr) {
                 var element = template[attr].element;
@@ -104,20 +101,54 @@ function TemplateWow() {
                 }
                 continue;
             }
-            setDataWithTemplate(template[attr], (data || {})[attr]);
+            this.setDataWithTemplate(template[attr], (data || {})[attr]);
+        }
+    };
+
+    function DynamicObject(template) {
+        for (var name in template) {
+            Object.defineProperty(this, '_' + name, {
+                enumerable: false,
+                value: new DynamicObject(template[name])
+            });
+            Object.defineProperty(this, name, {
+                enumerable: true,
+                get: function() {
+                    return this.get(name);
+                },
+                set: function(value) {
+                    this.set(name, value);
+                }
+            });
         }
     }
-
-    TemplateWow.prototype.setData = function(el, data) {
-        var template = getTemplate(el);
-        setDataWithTemplate(template, data);
+    DynamicObject.TYPE_VALUE = 1;
+    DynamicObject.prototype.get = function(name) {
+        return this['_' + name];
+    };
+    DynamicObject.prototype.set = function(name, value) {
+        if (this.type === DynamicObject.TYPE_VALUE)
     };
 
-    TemplateWow.prototype.bindData = function(el, data) {
-        var template = getTemplate(el);
-    };
+    utils.createDynamicObjectWithTemplate = function(template) {
 
-
-    TemplateWow.prototype.getData = function(el) {
+        for (var name in template) {
+            obj['_' + name] = {};
+        }
     };
+    return utils;
 })();
+
+TemplateWow.prototype.setData = function(el, data) {
+    var _ = TemplateWow.utils;
+    var template = _.getTemplate(el);
+    _.setDataWithTemplate(template, data);
+};
+
+TemplateWow.prototype.bindData = function(el, data) {
+    var template = TemplateWow.utils.getTemplate(el);
+};
+
+
+TemplateWow.prototype.getData = function(el) {
+};
