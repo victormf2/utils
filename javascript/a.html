@@ -1,0 +1,305 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <style>
+      #codeInput {
+        width: 100%;
+        height: 100%;
+        min-height: 300px;
+      }
+      h1 {
+        font-size: 31px;
+      }
+
+      .tab-pane pre {
+        word-wrap: break-word;
+      }
+      .tab-content {
+        height: 100%;
+        border-left: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        border-right: 1px solid #ddd;
+        overflow: auto;
+        padding: 7px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-6">
+          <h1>Insert JSON here</h1>
+          <textarea id="codeInput"></textarea>
+        </div>
+        <div class="col-6">
+          <div class="bd-example bd-example-tabs" role="tabpanel">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#csharp" role="tab" aria-controls="home" aria-expanded="true">C#</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#typescript" role="tab" aria-controls="profile" aria-expanded="false">Typescript</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#mongoose" role="tab" aria-controls="profile" aria-expanded="false">Mongoose</a>
+              </li>
+            </ul>
+            <div class="tab-content">
+              <div role="tabpanel" class="tab-pane fade active show" id="csharp" aria-labelledby="home-tab" aria-expanded="true">
+                <pre></pre>
+              </div>
+              <div class="tab-pane fade" id="typescript" role="tabpanel" aria-labelledby="profile-tab" aria-expanded="false">
+                <pre></pre>
+              </div>
+              <div class="tab-pane fade" id="mongoose" role="tabpanel" aria-labelledby="profile-tab" aria-expanded="false">
+                <pre></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+    <script>
+      $(function() {
+        $('#codeInput').on('input', function() {
+          try {
+            $('.tab-pane pre').html('Parsing...');
+            let jsonObject = JSON.parse($(this).val());
+            let propInfo = toPropertiesInfo(jsonObject);
+            $('#csharp pre').html(processForCSharp(propInfo));
+            $('#typescript pre').html(processForTypesScript(propInfo));
+            let a = processForMongooseSchema(propInfo);
+            console.log(a);
+            $('#mongoose pre').html(a);
+          } catch(err) {
+            if (err === 1)
+              $('.tab-pane pre').html('Invalid JSON');
+            else
+              throw err;
+          }
+    
+        });
+      });
+      function toPropertiesInfo(jsonObject) {
+        let objType = $.type(jsonObject);
+        if (objType !== 'object') {
+          throw 1;
+        }
+        let propertiesInfo = [];
+        for (let name in jsonObject) {
+          let value = jsonObject[name];
+          let propType = $.type(value);
+          let propInfo = getPropInfo(name, propType, value);
+          propertiesInfo.push(propInfo);
+        }
+        return propertiesInfo;
+      }
+
+      function getPropInfo(name, propType, value) {
+        let propInfo = {
+          name: name,
+          type: propType
+        };
+        if (propType === 'object') {
+          propInfo.properties = toPropertiesInfo(value);
+        } else if (propType === 'number') {
+          propInfo.extraType = Math.floor(value) === value ? 'int' : 'double';
+        } else if (propType === 'array') {
+          if (value.length) {
+            let arrayValue = value[0];
+            let arrayType = $.type(arrayValue);
+            propInfo.elementProp = getPropInfo(name, arrayType, arrayValue);
+          }
+          else {
+            propInfo.elementProp = getPropInfo(name, 'string', '');
+          }
+        }
+        return propInfo;
+      }
+
+      function processForTypesScript(propertyInfos, className = "MyClass") {
+        let extraClasses = [];
+        let classContents = 'export class ' + className + '\n{\n';
+        propertyInfos.forEach(propInfo => {
+          let propDefinition = getTypeScriptPropertyDefinition(propInfo);
+          extraClasses = extraClasses.concat(propDefinition.extraClasses);
+          classContents += '  public ' +  propDefinition.tsName + ' : ' + propDefinition.tsType + ';\n';
+        });
+        classContents += '}\n\n';
+        extraClasses.forEach(extraClassContent => {
+          classContents += extraClassContent;
+        })
+        return classContents;
+      }
+
+      function getTypeScriptPropertyDefinition(propInfo, isArrayType = false) {
+        let extraClasses = [];
+        let tsType = propInfo.type;
+        let tsName = propInfo.name;
+        if (isArrayType) tsName = normalizeArrayTypeName(tsName);
+        
+        switch (tsType) {
+          case 'object':
+            tsType = toCamelCaseCapitalize(tsName);
+            extraClasses.push(processForTypesScript(propInfo.properties, tsType));
+            break;
+          case 'array':
+            let arrayPropertyDefinition = getTypeScriptPropertyDefinition(propInfo.elementProp, true);
+            extraClasses = extraClasses.concat(arrayPropertyDefinition.extraClasses);
+            tsType = 'Array&lt;' + arrayPropertyDefinition.tsType + '&gt;';
+            break;
+          case 'date':
+            tsType = 'Date';
+            break;
+          case 'string':
+          case 'number':
+          case 'boolean':
+            break;
+          default:
+            tsType = 'any';
+        }
+        return {
+          tsType: tsType,
+          tsName: toCamelCase(tsName, true),
+          extraClasses: extraClasses
+        }
+      }
+      
+      function processForCSharp(propertyInfos, className = "MyClass") {
+        let extraClasses = [];
+        let classContents = 'public class ' + className + '\n{\n';
+        propertyInfos.forEach(propInfo => {
+          let propDefinition = getCSharpPropertyDefinition(propInfo);
+          extraClasses = extraClasses.concat(propDefinition.extraClasses);
+          classContents += '  public ' + propDefinition.tsType + ' ' +  propDefinition.tsName + ' { get; set; }\n';
+        });
+        classContents += '}\n\n';
+        extraClasses.forEach(extraClassContent => {
+          classContents += extraClassContent;
+        })
+        return classContents;
+      }
+      
+      function getCSharpPropertyDefinition(propInfo, isArrayType = false) {
+        let extraClasses = [];
+        let tsType = propInfo.type;
+        let tsName = propInfo.name;
+        if (isArrayType) tsName = normalizeArrayTypeName(tsName);
+        
+        switch (tsType) {
+          case 'object':
+            tsType = toCamelCaseCapitalize(tsName);
+            extraClasses.push(processForCSharp(propInfo.properties, tsType));
+            break;
+          case 'array':
+            let arrayPropertyDefinition = getCSharpPropertyDefinition(propInfo.elementProp, true);
+            extraClasses = extraClasses.concat(arrayPropertyDefinition.extraClasses);
+            tsType = 'List&lt;' + arrayPropertyDefinition.tsType + '&gt;';
+            break;
+          case 'date':
+            tsType = 'DateTime';
+            break;
+          case 'number':
+            tsType = propInfo.extraType;
+            break;
+          case 'boolean':
+            tsType = 'bool';
+            break;
+          case 'string':
+            break;
+          default:
+            tsType = 'object';
+            break;
+        }
+        return {
+          tsType: tsType,
+          tsName: toCamelCaseCapitalize(tsName),
+          extraClasses: extraClasses
+        }
+      }
+      
+      function processForMongooseSchema(propertyInfos, level = 1) {
+        let tabs = '  '.repeat(level - 1);
+        let schemaContents = '';
+        schemaContents += '_mongoose.Schema({\n';
+        propertyInfos.forEach(propInfo => {
+          schemaContents += getMongooSchemaProppertyDefinition(propInfo, level) + ',\n';
+        });
+        schemaContents = schemaContents.slice(0, -2);
+        schemaContents += '\n';
+        if (level > 1) {
+          schemaContents += tabs + '}, {\n' + tabs + '  _id: false\n';
+        }
+        schemaContents += tabs + '})';
+        return schemaContents;
+      }
+      
+      function getMongooSchemaProppertyDefinition(propInfo, level, isArrayType = false) {
+        let tabs = '  '.repeat(level);
+        let tsType = propInfo.type;
+        let tsName = toCamelCase(propInfo.name, true);
+        let namePrefix = isArrayType ? '' : tabs + tsName + ' : ';
+        switch (tsType) {
+          case 'object':
+            return namePrefix + processForMongooseSchema(propInfo.properties, isArrayType ? level : level + 1);
+          case 'array':
+            return namePrefix + '[' + 
+              getMongooSchemaProppertyDefinition(propInfo.elementProp, level + 1, true) +
+            ']';
+          case 'number':
+          case 'date':
+          case 'boolean':
+            return namePrefix + capitalizeFirstLetter(tsType);
+          case 'string':
+            if (/id$/i.test(tsName))
+              return namePrefix + '_mongoose.Schema.Types.ObjectId';
+            return namePrefix + 'String';
+          default:
+            return namePrefix + '{}';
+        }
+      }
+
+      function capitalizeFirstLetter(string) {
+          return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+      
+      function normalizeArrayTypeName(arrayType) {
+        return arrayType.replace(/^list|list$/i, '').replace(/s$/, '');
+      }
+      
+      function removeAccents(str) {
+        return str.replace(/[áãâ]/g, 'a')
+                  .replace(/[ÁÃÂ]/g, 'A')
+                  .replace(/[éê]/g, 'e')
+                  .replace(/[ÉÊ]/g, 'E')
+                  .replace(/[í]/g, 'i')
+                  .replace(/[Í]/g, 'I')
+                  .replace(/[óôõ]/g, 'o')
+                  .replace(/[ÓÔÕ]/g, 'O')
+                  .replace(/[úûü]/g, 'u')
+                  .replace(/[ÚÛÜ]/g, 'U')
+                  .replace('ç', 'c')
+                  .replace('Ç', 'C');
+      }
+      
+      function toCamelCaseCapitalize(name) {
+        return capitalizeFirstLetter(toCamelCase(name));
+      }
+      
+      function toCamelCase(name, keepPrefix = false) {
+        if (name === '_id' && keepPrefix) debugger;
+        let nonAccent = removeAccents(name);
+        if (!keepPrefix) {
+          return nonAccent.replace(/[\s_-]+(\w)/g, (match, group1) => group1.toUpperCase());
+        }
+        let prefixMatch = /^[\s_-]+/.exec(nonAccent);
+        let prefix = prefixMatch ? prefixMatch[0] : '';
+        return prefix + nonAccent.substring(prefix.length).replace(/[\s_-]+(\w)/g, (match, group1) => group1.toUpperCase());
+      }
+    
+    </script>
+  </body>
+</html>
